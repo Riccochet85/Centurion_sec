@@ -1,0 +1,550 @@
+#app > div.flex.h-full.overflow-hidden.bg-sidebar-light.dark\:bg-sidebar-dark > main > div > div.relative.size-full.overflow-hidden > div.\@container\/chat.flex.size-full.flex-col.items-center.text-foreground-800.sm\:min-w-secondary-panel-slim.lg\:min-w-secondary-panel.overflow-y-auto.overflow-x-hidden.overscroll-contain.scrollbar-stable.t-custom-scrollbar.scrollbar-containerv# ======================================================
+# MODULE 0 — Imports (Shared)
+# ======================================================
+
+import re
+import ipaddress
+import hashlib
+import subprocess
+import socket
+import argparse
+from datetime import datetime
+from typing import Dict, Any, Optional, List, Tuple
+
+
+# ======================================================
+# MODULE 1 — Canonical Rule Library (Independent)
+# ======================================================
+
+CANONICAL_RULE_LIBRARY = """
+# Google Analytics
+action=block|name=CenturionCent_Block_GoogleAnalytics|direction=out|targets=216.58.0.0/16|protocol=any|profile=any|label:en=GoogleAnalyticsCIDR
+
+# Google Fonts / Google APIs
+action=block|name=CenturionCent_Block_GoogleFonts|direction=out|targets=142.250.0.0/15|protocol=any|profile=any|label:en=GoogleFonts
+
+# Google Wide
+action=block|name=CenturionCent_Block_GoogleWide|direction=out|targets=172.217.0.0/16|protocol=any|profile=any|label:en=GoogleWideCIDR
+
+# Facebook
+action=block|name=CenturionCent_Block_Facebook|direction=out|targets=157.240.0.0/16|protocol=any|profile=any|label:en=FacebookCIDR
+
+# Twitter / X
+action=block|name=CenturionCent_Block_Twitter|direction=out|targets=104.244.42.0/24|protocol=any|profile=any|label:en=TwitterCIDR
+
+# Cloudflare
+action=block|name=CenturionCent_Block_Cloudflare|direction=out|targets=104.16.0.0/12|protocol=any|profile=any|label:en=CloudflareCIDR
+
+# Akamai
+action=block|name=CenturionCent_Block_Akamai|direction=out|targets=23.0.0.0/11|protocol=any|profile=any|label:en=AkamaiCIDR
+
+# AWS
+action=block|name=CenturionCent_Block_AWS|direction=out|targets=52.95.0.0/16|protocol=any|profile=any|label:en=AWSCIDR
+
+# Microsoft Telemetry
+action=block|name=CenturionCent_Block_MicrosoftTelemetry|direction=out|targets=13.107.0.0/16|protocol=any|profile=any|label:en=MicrosoftTelemetryCIDR
+
+# Generic Ads
+action=block|name=CenturionCent_Block_GenericAds|direction=out|targets=198.51.100.0/24|protocol=any|profile=any|label:en=GenericAdsCIDR
+""".strip()
+
+
+# ======================================================
+# MODULE 2 — Parsing + Hash + Linter (Independent)
+# ======================================================
+
+RULE_V1_RE = re.compile(r"^([^|]+)\|(in|out)\|(.+)$", re.IGNORECASE)
+
+def rule_hash(rule: dict) -> str:
+    payload = "|".join([
+        rule.get("name", ""),
+        rule.get("action", ""),
+        rule.get("direction", ""),
+        rule.get("targets", ""),
+        rule.get("protocol", ""),
+        rule.get("port") or rule.get("ports", ""),
+        rule.get("profile", "")
+    ])
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+def parse_rule(line: str) -> Optional[Dict[str, Any]]:
+    line = line.strip()
+    if not line or line.startswith("#"):
+        return None
+
+    if "action=" in line:
+        data: Dict[str, Any] = {}
+        for seg in line.split("|"):
+            seg = seg.strip()
+            if "=" in seg:
+                k, v = seg.split("=", 1)
+                data[k.strip().lower()] = v.strip()
+
+        if not all(k in data for k in ("action", "name", "direction", "targets")):
+            return None
+
+        data["protocol"] = data.get("protocol", "any")
+        data["profile"] = data.get("profile", "any")
+        data["targets"] = ",".join(
+            t.strip() for t in data["targets"].split(",") if t.strip()
+        )
+        data["raw_line"] = line
+        return data
+
+    m = RULE_V1_RE.match(line)
+    if not m:
+        return None
+
+    name, direction, ips = m.groups()
+    ips = ",".join(i.strip() for i in ips.split(",") if i.strip())
+    if not ips:
+        return None
+
+    return {
+        "action": "block",
+        "name": name,
+        "direction": direction.lower(),
+        "targets": ips,
+        "protocol": "any",
+        "profile": "any",
+        "raw_line": line
+    }
+
+def lint_firewall_file(path: str) -> Dict[str, Any]:
+    issues: List[Dict[str, Any]] = []
+    seen_hashes: Dict[str, int] = {}
+    seen_namedir: Dict[Tuple[str, str], int] = {}
+
+    with open(path, encoding="utf-8") as f:
+        lines = f.readlines()
+
+    for idx, raw in enumerate(lines, start=1):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        rule = parse_rule(raw)
+        if not rule:
+            issues.append({
+                "line": idx,
+                "raw": raw.rstrip("\n"),
+                "severity": "error",
+                "code": "PARSE_FAILED",
+                "detail": "Unable to parse rule line."
+            })
+            continue
+
+        for key in ("action", "name", "direction", "targets", "protocol", "profile"):
+            if key not in rule or not str(rule[key]).strip():
+                issues.append({
+                    "line": idx,
+                    "raw": raw.rstrip("\n"),
+                    "severity": "error",
+                    "code": "MISSING_FIELD",
+                    "detail": f"Missing required field '{key}'."
+                })
+
+        action = rule["action"].lower()
+        if action not in {"block", "allow"}:
+            issues.append({
+                "line": idx,
+                "raw": raw.rstrip("\n"),
+                "severity": "error",
+                "code": "INVALID_ACTION",
+                "detail": f"Invalid action '{rule['action']}'."
+            })
+
+        direction = rule["direction"].lower()
+        if direction not in {"in", "out"}:
+            issues.append({
+                "line": idx,
+                "raw": raw.rstrip("\n"),
+                "severity": "error",
+                "code": "INVALID_DIRECTION",
+                "detail": f"Invalid direction '{rule['direction']}'."
+            })
+
+        for t in rule["targets"].split(","):
+            t = t.strip()
+            if not t:
+                continue
+            try:
+                if "/" in t:
+                    ipaddress.ip_network(t, strict=False)
+                else:
+                    ipaddress.ip_address(t)
+            except ValueError:
+                issues.append({
+                    "line": idx,
+                    "raw": raw.rstrip("\n"),
+                    "severity": "error",
+                    "code": "INVALID_TARGET",
+                    "detail": f"Invalid IP/CIDR target '{t}'."
+                })
+
+        h = rule_hash(rule)
+        if h in seen_hashes:
+            issues.append({
+                "line": idx,
+                "raw": raw.rstrip("\n"),
+                "severity": "warning",
+                "code": "DUPLICATE_HASH",
+                "detail": f"Duplicate of line {seen_hashes[h]}."
+            })
+        else:
+            seen_hashes[h] = idx
+
+        nd = (rule["name"], rule["direction"])
+        if nd in seen_namedir:
+            issues.append({
+                "line": idx,
+                "raw": raw.rstrip("\n"),
+                "severity": "warning",
+                "code": "DUPLICATE_NAME_DIRECTION",
+                "detail": f"Duplicate name+direction of line {seen_namedir[nd]}."
+            })
+        else:
+            seen_namedir[nd] = idx
+
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "file": path,
+        "issues": issues
+    }
+
+
+# ======================================================
+# MODULE 3 — Formatter (Independent)
+# ======================================================
+
+def format_rule_line(rule: Dict[str, Any]) -> str:
+    base_order = ["action", "name", "direction", "targets", "protocol", "profile"]
+
+    rule = dict(rule)
+    rule["protocol"] = rule.get("protocol", "any")
+    rule["profile"] = rule.get("profile", "any")
+
+    segments = [f"{key}={rule[key]}" for key in base_order]
+
+    extra_keys: List[str] = []
+    raw = rule.get("raw_line", "")
+    if raw and "action=" in raw:
+        for seg in raw.split("|"):
+            seg = seg.strip()
+            if "=" in seg:
+                k, v = seg.split("=", 1)
+                if k.strip().lower() not in base_order:
+                    extra_keys.append(f"{k.strip()}={v.strip()}")
+
+    return "|".join(segments + extra_keys)
+
+def format_firewall_file(path_in: str, path_out: Optional[str] = None) -> Dict[str, Any]:
+    if path_out is None:
+        path_out = path_in
+
+    with open(path_in, encoding="utf-8") as f:
+        lines = f.readlines()
+
+    formatted_lines: List[str] = []
+    changed = False
+
+    for raw in lines:
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#"):
+            formatted_lines.append(raw.rstrip("\n"))
+            continue
+
+        rule = parse_rule(raw)
+        if not rule:
+            formatted_lines.append(raw.rstrip("\n"))
+            continue
+
+        new_line = format_rule_line(rule)
+        if new_line != stripped:
+            changed = True
+
+        formatted_lines.append(new_line)
+
+    with open(path_out, "w", encoding="utf-8") as f:
+        for line in formatted_lines:
+            f.write(line + "\n")
+
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "file_in": path_in,
+        "file_out": path_out,
+        "changed": changed
+    }
+
+
+# ======================================================
+# MODULE 4 — System Snapshot (Independent)
+# ======================================================
+
+def system_snapshot() -> Dict[str, Any]:
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "firewall_rules": subprocess.getoutput("netsh advfirewall firewall show rule name=all"),
+        "active_connections": subprocess.getoutput("netstat -ano"),
+        "routing_table": subprocess.getoutput("route print"),
+        "ipconfig": subprocess.getoutput("ipconfig /all")
+    }
+
+
+# ======================================================
+# MODULE 5 — Firewall Executor (Independent, no duplicates)
+# ======================================================
+
+def firewall_rule_exists(name: str, direction: str) -> bool:
+    r = subprocess.run(
+        ["netsh", "advfirewall", "firewall", "show", "rule", f"name={name}", f"dir={direction}"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        text=True
+    )
+    return r.returncode == 0
+
+def add_firewall_rule(rule: Dict[str, Any]) -> bool:
+    if firewall_rule_exists(rule["name"], rule["direction"]):
+        return True
+    cmd = [
+        "netsh", "advfirewall", "firewall", "add", "rule",
+        f"name={rule['name']}",
+        f"dir={rule['direction']}",
+        f"action={rule['action']}",
+        f"remoteip={rule['targets']}",
+        f"profile={rule['profile']}",
+        "enable=yes"
+    ]
+    r = subprocess.run(
+        cmd,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        text=True
+    )
+    return r.returncode == 0
+
+def delete_firewall_rule(name: str, direction: str) -> None:
+    subprocess.run(
+        ["netsh", "advfirewall", "firewall", "delete", "rule",
+         f"name={name}", f"dir={direction}"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        text=True
+    )
+
+def process_firewall_file(path: str) -> List[Dict[str, Any]]:
+    results: List[Dict[str, Any]] = []
+    added: List[Tuple[str, str]] = []
+
+    with open(path, encoding="utf-8") as f:
+        for raw in f:
+            rule = parse_rule(raw)
+            if not rule:
+                continue
+
+            rh = rule_hash(rule)
+
+            if firewall_rule_exists(rule["name"], rule["direction"]):
+                status = "exists"
+            else:
+                if not add_firewall_rule(rule):
+                    for n, d in added:
+                        delete_firewall_rule(n, d)
+                    results.append({
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "name": rule["name"],
+                        "direction": rule["direction"],
+                        "action": rule["action"],
+                        "targets": rule["targets"],
+                        "rule_hash": rh,
+                        "status": "rollback"
+                    })
+                    return results
+                added.append((rule["name"], rule["direction"]))
+                status = "added"
+
+            results.append({
+                "timestamp": datetime.utcnow().isoformat(),
+                "name": rule["name"],
+                "direction": rule["direction"],
+                "action": rule["action"],
+                "targets": rule["targets"],
+                "rule_hash": rh,
+                "status": status
+            })
+
+    return results
+
+
+# ======================================================
+# MODULE 6 — Rule Builder CLI (Independent, no duplicates)
+# ======================================================
+
+def load_existing_rules(path: str) -> List[Dict[str, Any]]:
+    rules: List[Dict[str, Any]] = []
+    try:
+        with open(path, encoding="utf-8") as f:
+            for raw in f:
+                r = parse_rule(raw)
+                if r:
+                    rules.append(r)
+    except FileNotFoundError:
+        pass
+    return rules
+
+def rule_exists_in_file(path: str, name: str, direction: str, targets: str) -> bool:
+    rules = load_existing_rules(path)
+    for r in rules:
+        if r["name"] == name and r["direction"] == direction and r["targets"] == targets:
+            return True
+    return False
+
+def build_rule_line(name: str,
+                    action: str,
+                    direction: str,
+                    targets: str,
+                    protocol: str = "any",
+                    profile: str = "any",
+                    label_en: Optional[str] = None) -> str:
+    segments = [
+        f"action={action}",
+        f"name={name}",
+        f"direction={direction}",
+        f"targets={targets}",
+        f"protocol={protocol}",
+        f"profile={profile}",
+    ]
+    if label_en:
+        segments.append(f"label:en={label_en}")
+    return "|".join(segments)
+
+def cli_rule_builder():
+    parser = argparse.ArgumentParser(description="Centurion Rule Builder CLI")
+    parser.add_argument("--file", required=True, help="Firewall rules file path")
+    parser.add_argument("--name", required=True, help="Rule name")
+    parser.add_argument("--action", default="block", choices=["block", "allow"], help="Rule action")
+    parser.add_argument("--direction", default="out", choices=["in", "out"], help="Rule direction")
+    parser.add_argument("--targets", required=True, help="IP or CIDR or comma-separated list")
+    parser.add_argument("--protocol", default="any", help="Protocol")
+    parser.add_argument("--profile", default="any", help="Firewall profile")
+    parser.add_argument("--label-en", default=None, help="English label")
+    args = parser.parse_args()
+
+    targets_norm = ",".join(t.strip() for t in args.targets.split(",") if t.strip())
+
+    if rule_exists_in_file(args.file, args.name, args.direction, targets_norm):
+        return
+
+    line = build_rule_line(
+        name=args.name,
+        action=args.action,
+        direction=args.direction,
+        targets=targets_norm,
+        protocol=args.protocol,
+        profile=args.profile,
+        label_en=args.label_en
+    )
+
+    with open(args.file, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+
+
+# ======================================================
+# MODULE 7 — Rule Auto‑Generator from Domains (Independent, no duplicates)
+# ======================================================
+
+def resolve_domain_ips(domain: str) -> List[str]:
+    ips: List[str] = []
+    try:
+        info = socket.getaddrinfo(domain, None)
+        for family, _, _, _, sockaddr in info:
+            ip = sockaddr[0]
+            if ip not in ips:
+                ips.append(ip)
+    except socket.gaierror:
+        pass
+    return ips
+
+def generate_rules_for_domain(domain: str,
+                              base_name: str,
+                              direction: str = "out",
+                              action: str = "block",
+                              profile: str = "any",
+                              protocol: str = "any") -> List[str]:
+    ips = resolve_domain_ips(domain)
+    if not ips:
+        return []
+
+    rules: List[str] = []
+    for idx, ip in enumerate(ips, start=1):
+        try:
+            ipaddress.ip_address(ip)
+        except ValueError:
+            continue
+        name = f"{base_name}_{idx}"
+        targets = ip
+        label_en = f"{domain}_{ip}"
+        line = build_rule_line(
+            name=name,
+            action=action,
+            direction=direction,
+            targets=targets,
+            protocol=protocol,
+            profile=profile,
+            label_en=label_en
+        )
+        rules.append(line)
+    return rules
+
+def append_domain_rules_to_file(domain: str, base_name: str, path: str) -> List[str]:
+    existing = load_existing_rules(path)
+    existing_set = {(r["name"], r["direction"], r["targets"]) for r in existing}
+
+    generated = generate_rules_for_domain(domain, base_name)
+    appended: List[str] = []
+
+    with open(path, "a", encoding="utf-8") as f:
+        for line in generated:
+            r = parse_rule(line)
+            if not r:
+                continue
+            key = (r["name"], r["direction"], r["targets"])
+            if key in existing_set:
+                continue
+            existing_set.add(key)
+            f.write(line + "\n")
+            appended.append(line)
+
+    return appended
+
+
+# ======================================================
+# MODULE 8 — Default Inbound Block Policy (Independent)
+# ======================================================
+
+def set_default_inbound_block() -> Dict[str, Any]:
+    profiles = ["domainprofile", "privateprofile", "publicprofile"]
+    results: List[Dict[str, Any]] = []
+
+    for prof in profiles:
+        cmd = [
+            "netsh", "advfirewall", "set", prof,
+            "firewallpolicy", "blockinbound,allowoutbound"
+        ]
+        r = subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            text=True
+        )
+        results.append({
+            "profile": prof,
+            "returncode": r.returncode
+        })
+
+    return {
+        "timestamp": datetime.utcnow().isoformat(),
+        "policy": "blockinbound,allowoutbound",
+        "results": results
+    }

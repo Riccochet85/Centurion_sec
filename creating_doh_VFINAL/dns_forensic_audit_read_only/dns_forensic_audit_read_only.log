@@ -1,0 +1,11 @@
+[2025-12-28 11:30:08] === START DNS FORENSIC AUDIT (READ-ONLY) ===
+[2025-12-28 11:30:08] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-28 11:30:08] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-28 11:30:08] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-28 11:30:08] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] DhcpNameServer = 192.168.0.1
+[2025-12-28 11:30:08] GLOBAL DhcpNameServer = 192.168.0.1
+[2025-12-28 11:30:08] DoH: 1.1.1.1 Template=https://cloudflare-dns.com/dns-query
+[2025-12-28 11:30:08] DoH: 1.0.0.1 Template=https://cloudflare-dns.com/dns-query
+[2025-12-28 11:30:08] DoH: 2606:4700:4700::1001 Template=https://cloudflare-dns.com/dns-query
+[2025-12-28 11:30:08] DoH: 2606:4700:4700::1111 Template=https://cloudflare-dns.com/dns-query
+[2025-12-28 11:30:08] === END DNS FORENSIC AUDIT ===

@@ -1,0 +1,16 @@
+{
+  "Registry": [
+    {
+      "Value": "192.168.0.1",
+      "Field": "DhcpNameServer",
+      "Path": "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}"
+    },
+    {
+      "Value": "192.168.0.1",
+      "Field": "DhcpNameServer",
+      "Path": "Microsoft.PowerShell.Core\\Registry::HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters\\Interfaces\\{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}"
+    }
+  ],
+  "Timestamp": "2025-12-31T23:33:43.3063695-06:00",
+  "Adapters": []
+}

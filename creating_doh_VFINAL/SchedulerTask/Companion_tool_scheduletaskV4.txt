@@ -1,0 +1,71 @@
+<#
+.SYNOPSIS
+    Creates a Windows Scheduled Task to run a PowerShell script daily.
+.DESCRIPTION
+    This script registers a scheduled task that runs a specified PowerShell script
+    at a given time every day. Includes validation and error handling.
+#>
+
+param (
+    [Parameter(Mandatory = $true)]
+    [ValidateScript({ Test-Path $_ })] "C:\Users\herbe\OneDrive\Apps\PowerShell\creating_doh_VFINAL\companion_tool\dns_forensic_companion_enforceV2.ps1"
+    [string]$ScriptPath,
+
+    [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$TaskName,"CompanionToolDoH"
+
+    [Parameter(Mandatory = $true)]
+    [ValidatePattern('^\d{2}:\d{2}$')] 00:30
+    [string]$RepeatInterval
+)
+
+Write-Host "Validated Script Path: $ScriptPath"
+Write-Host "Validated Task Name: $TaskName"
+Write-Host "Validated Repeat Interval: $RepeatInterval")
+
+try {
+    # Code review comment -> Good: Validates that the script file exists before proceeding.
+    if (-not (Test-Path $ScriptPath)) {
+        throw "The script file '$ScriptPath' does not exist."
+    }
+
+    # Code review comment -> Good: Validates time format using regex.
+    # Code review comment -> Suggestion: Also validate that the time is a valid 24-hour time (e.g., not 25:99).
+    if ($RunTime -notmatch '^\d{2}:\d{2}$') {
+        throw "Invalid time format. Use HH:mm (24-hour)."
+    }
+    try {
+        $parsedTime = [datetime]::ParseExact($RunTime, 'HH:mm', $null)
+    }
+    catch {
+        throw "Invalid time value. Ensure the time is within 00:00 to 23:59."
+    }
+
+    # Code review comment -> Good: Creates the scheduled task action to run PowerShell with the script.
+    # Code review comment -> Suggestion: Consider escaping the script path more robustly in case it contains special characters.
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" `
+        -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$ScriptPath`""
+
+    # Code review comment -> Good: Creates a daily trigger at the specified time.
+    $trigger = New-ScheduledTaskTrigger -Daily -At $parsedTime
+
+    # Code review comment -> Good: Runs with highest privileges.
+    # Code review comment -> Suggestion: Allow user to specify a custom account instead of hardcoding SYSTEM.
+    $principal = New-ScheduledTaskPrincipal -UserId "NT AUTHORITY\SYSTEM" -RunLevel Highest
+
+    # Code review comment -> Good: Registers the scheduled task.
+    # Code review comment -> Suggestion: Wrap Register-ScheduledTask in try/catch to handle permission or naming conflicts.
+    try {
+        Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Principal $principal -Force
+        Write-Host "Scheduled task '$TaskName' created successfully to run at $RunTime daily." -ForegroundColor Green
+    }
+    catch {
+        throw "Failed to register scheduled task. Error: $_"
+    }
+}
+catch {
+    # Code review comment -> Good: Catches and displays errors.
+    # Code review comment -> Suggestion: Consider logging errors to a file for auditing.
+    Write-Host "Error: $_" -ForegroundColor Red
+}

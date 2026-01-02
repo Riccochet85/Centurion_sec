@@ -1,0 +1,55 @@
+
+
+# ------------------------------------------------------
+# HARD SILENCE (NO ESCAPE)
+# ------------------------------------------------------
+DEVNULL = open(os.devnull, "w")
+sys.stdout = DEVNULL
+sys.stderr = DEVNULL
+
+# ------------------------------------------------------
+# Paths (self-located)
+# ------------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+FIREWALL_TXT = os.path.join(BASE_DIR, "firewall_rules.txt")
+HOSTS_TXT    = os.path.join(BASE_DIR, "hosts_rules.txt")
+
+FW_CSV    = os.path.join(BASE_DIR, "firewall_sumary_rules.csv")
+HOSTS_CSV = os.path.join(BASE_DIR, "hosts_firewall_rules.csv")
+
+HOSTS_PATH = os.path.join(
+    os.environ["SystemRoot"], "System32", "drivers", "etc", "hosts"
+)
+
+for p in (FW_CSV, HOSTS_CSV):
+    if not os.path.exists(p):
+        open(p, "w", encoding="utf-8").close()
+
+
+    
+# ------------------------------------------------------
+# CSV writer
+# ------------------------------------------------------
+
+import csv
+
+
+def write_csv(path, rows):
+    if not rows:
+        return
+    with open(path, "a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=sorted(rows[0].keys()))
+        if f.tell() == 0:
+            w.writeheader()
+        w.writerows(rows)
+
+# ------------------------------------------------------
+# MAIN
+# ------------------------------------------------------
+def main():
+    write_csv(FW_CSV, process_firewall())
+    write_csv(HOSTS_CSV, process_hosts())
+
+if __name__ == "__main__":
+    main()

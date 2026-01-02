@@ -1,0 +1,344 @@
+<#
+HEADER: Cloudflare DoH Correcting Tool — Alignment to Authoritative V2
+Role:
+    - Correct and realign system state to match the Cloudflare DoH Hardening Orchestration V2 doctrine.
+    - Enforce:
+        * No registry-level DNS (Interfaces + Global)
+        * No system proxies (WinHTTP + HKLM Internet Settings)
+    - Audit (read-only):
+        * DoH configuration vs explicit Cloudflare doctrine
+        * Adapter DNS server configuration
+        * NRPT rules
+        * DNS-related firewall rules (port 53)
+        * Presence and target of "Cloudflare DoH Enforcement" scheduled task
+
+Reference (authoritative):
+    D:\TLS_Secure\DoH\Cloudflare_DoH_Hardening_Orchestration.ps1
+
+Exclusions:
+    - Does NOT create or modify DoH entries
+    - Does NOT touch TLS/Certificates
+    - Does NOT touch HOSTS
+    - Does NOT touch user HKCU Internet Settings
+    - Does NOT create or modify scheduled tasks
+
+Privilege: Requires Administrator
+Logging: Console only (no files, no new folders)
+#>
+
+# ======================
+# Privilege verification
+# ======================
+$principal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "ERROR: Administrator privileges are required." -ForegroundColor Red
+    exit 1
+}
+
+# ============================================================
+# DOCTRINE: EXPLICIT DoH RESOLVERS (ONLY THESE ARE VALID)
+# ============================================================
+
+# Resolver 1 — IPv4 Primary
+$AllowedDoh_1 = [PSCustomObject]@{
+    IP        = '1.1.1.1'
+    Protocol  = 'DoH'
+    Template  = 'https://cloudflare-dns.com/dns-query'
+    Port      = 443
+}
+
+# Resolver 2 — IPv4 Secondary
+$AllowedDoh_2 = [PSCustomObject]@{
+    IP        = '1.0.0.1'
+    Protocol  = 'DoH'
+    Template  = 'https://cloudflare-dns.com/dns-query'
+    Port      = 443
+}
+
+# Resolver 3 — IPv6 Primary
+$AllowedDoh_3 = [PSCustomObject]@{
+    IP        = '2606:4700:4700::1111'
+    Protocol  = 'DoH'
+    Template  = 'https://cloudflare-dns.com/dns-query'
+    Port      = 443
+}
+
+# Resolver 4 — IPv6 Secondary
+$AllowedDoh_4 = [PSCustomObject]@{
+    IP        = '2606:4700:4700::1001'
+    Protocol  = 'DoH'
+    Template  = 'https://cloudflare-dns.com/dns-query'
+    Port      = 443
+}
+
+# ============================
+# 1. DNS — REGISTRY ENFORCEMENT
+# ============================
+$baseTcpipPath      = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters'
+$interfacesBasePath = Join-Path $baseTcpipPath 'Interfaces'
+
+function Remove-RegistryValueIfPresent {
+    param(
+        [string]$KeyPath,
+        [string]$ValueName
+    )
+
+    try {
+        $null = Get-Item -Path $KeyPath -ErrorAction Stop
+    } catch {
+        return
+    }
+
+    $props = Get-ItemProperty -Path $KeyPath -ErrorAction SilentlyContinue
+    if ($null -ne $props -and ($props.PSObject.Properties.Name -contains $ValueName)) {
+        try {
+            Remove-ItemProperty -Path $KeyPath -Name $ValueName -ErrorAction Stop
+        } catch {
+            Write-Host "ERROR removing $ValueName from $KeyPath: $($_.Exception.Message)" -ForegroundColor Red
+        }
+    }
+}
+
+# 1.1 Interface-level DNS — remove NameServer and DhcpNameServer
+try {
+    $interfaceKeys = Get-ChildItem -Path $interfacesBasePath -ErrorAction Stop
+} catch {
+    Write-Host "ERROR: Cannot enumerate interface keys under $interfacesBasePath : $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
+
+foreach ($key in $interfaceKeys) {
+    $path = $key.PSPath
+    Remove-RegistryValueIfPresent -KeyPath $path -ValueName 'NameServer'
+    Remove-RegistryValueIfPresent -KeyPath $path -ValueName 'DhcpNameServer'
+}
+
+# 1.2 Global TCP/IP DNS — remove NameServer and DhcpNameServer
+Remove-RegistryValueIfPresent -KeyPath $baseTcpipPath -ValueName 'NameServer'
+Remove-RegistryValueIfPresent -KeyPath $baseTcpipPath -ValueName 'DhcpNameServer'
+
+# ==============================
+# 2. PROXY — SYSTEM ENFORCEMENT
+# ==============================
+
+# 2.1 WinHTTP proxy — reset to DIRECT
+try {
+    & netsh winhttp reset proxy | Out-Null
+} catch {
+    Write-Host "ERROR resetting WinHTTP proxy: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 2.2 Machine-level Internet Settings proxy (HKLM only)
+$inetSettingsHKLM = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings'
+
+function Set-RegistryValue {
+    param(
+        [string]$KeyPath,
+        [string]$Name,
+        [object]$Value,
+        [Microsoft.Win32.RegistryValueKind]$Type
+    )
+
+    try {
+        if (-not (Test-Path -Path $KeyPath)) {
+            return
+        }
+
+        if ($Value -eq $null) {
+            if (Get-ItemProperty -Path $KeyPath -Name $Name -ErrorAction SilentlyContinue) {
+                Remove-ItemProperty -Path $KeyPath -Name $Name -ErrorAction SilentlyContinue
+            }
+        } else {
+            New-ItemProperty -Path $KeyPath -Name $Name -Value $Value -PropertyType $Type -Force -ErrorAction SilentlyContinue | Out-Null
+        }
+    } catch {
+        Write-Host "ERROR setting $Name in $KeyPath: $($_.Exception.Message)" -ForegroundColor Red
+    }
+}
+
+# Doctrine: no proxy at machine level
+Set-RegistryValue -KeyPath $inetSettingsHKLM -Name 'ProxyEnable'   -Value 0     -Type ([Microsoft.Win32.RegistryValueKind]::DWord)
+Set-RegistryValue -KeyPath $inetSettingsHKLM -Name 'ProxyServer'   -Value $null -Type ([Microsoft.Win32.RegistryValueKind]::String)
+Set-RegistryValue -KeyPath $inetSettingsHKLM -Name 'ProxyOverride' -Value $null -Type ([Microsoft.Win32.RegistryValueKind]::String)
+
+# ==================================
+# 3. READ-ONLY AUDIT — ALIGNMENT CHECK
+# ==================================
+
+Write-Host ""
+Write-Host "=== POST-ENFORCEMENT STATE (ALIGNMENT TO CLOUDFLARE DoH V2) ==="
+
+# 3.1 Interface-level DNS (registry)
+Write-Host ""
+Write-Host "Interface-Level DNS (Tcpip\\Parameters\\Interfaces):"
+
+$interfacesPath = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces'
+$interfaceKeys = Get-ChildItem -Path $interfacesPath -ErrorAction SilentlyContinue
+
+foreach ($key in $interfaceKeys) {
+    $props = Get-ItemProperty -Path $key.PSPath -ErrorAction SilentlyContinue
+    [PSCustomObject]@{
+        KeyPath        = $key.PSPath
+        NameServer     = $props.NameServer
+        DhcpNameServer = $props.DhcpNameServer
+    }
+}
+
+# 3.2 Global TCP/IP DNS (registry)
+Write-Host ""
+Write-Host "Global TCP/IP DNS (Tcpip\\Parameters):"
+
+$globalPath  = 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters'
+$globalProps = Get-ItemProperty -Path $globalPath -ErrorAction SilentlyContinue
+
+[PSCustomObject]@{
+    NameServer     = $globalProps.NameServer
+    DhcpNameServer = $globalProps.DhcpNameServer
+    SearchList     = $globalProps.SearchList
+}
+
+# 3.3 Active adapter DNS (OS-level)
+Write-Host ""
+Write-Host "Active Adapter DNS (Get-DnsClientServerAddress):"
+
+try {
+    $dnsAll = Get-DnsClientServerAddress -ErrorAction Stop
+    $dnsAll | Select-Object InterfaceAlias, AddressFamily, ServerAddresses | Format-Table -AutoSize
+} catch {
+    Write-Host "ERROR querying adapter DNS: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 3.4 DoH configuration (cross-check with explicit doctrine)
+Write-Host ""
+Write-Host "System DoH configuration (Get-DnsClientDohServerAddress):"
+
+try {
+    $doh = Get-DnsClientDohServerAddress -ErrorAction SilentlyContinue
+    if ($doh) {
+        $doh | Select-Object ServerAddress, AllowFallbackToUdp, AutoUpgrade, DohTemplate | Format-Table -AutoSize
+
+        Write-Host ""
+        Write-Host "DoH entries not matching Cloudflare doctrine (Template/IP):"
+
+        foreach ($entry in $doh) {
+            $ip  = $entry.ServerAddress
+            $tpl = $entry.DohTemplate
+
+            $match = $false
+
+            if ($AllowedDoh_1.IP -eq $ip -and $AllowedDoh_1.Template -eq $tpl) { $match = $true }
+            if ($AllowedDoh_2.IP -eq $ip -and $AllowedDoh_2.Template -eq $tpl) { $match = $true }
+            if ($AllowedDoh_3.IP -eq $ip -and $AllowedDoh_3.Template -eq $tpl) { $match = $true }
+            if ($AllowedDoh_4.IP -eq $ip -and $AllowedDoh_4.Template -eq $tpl) { $match = $true }
+
+            if (-not $match) {
+                [PSCustomObject]@{
+                    ServerAddress = $ip
+                    DohTemplate   = $tpl
+                }
+            }
+        }
+    } else {
+        Write-Host "No DoH configuration found."
+    }
+} catch {
+    Write-Host "ERROR querying DoH configuration: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 3.5 NRPT
+Write-Host ""
+Write-Host "NRPT (Name Resolution Policy Table):"
+
+try {
+    $nrpt = Get-DnsClientNrptRule -ErrorAction SilentlyContinue
+    if ($nrpt) {
+        $nrpt | Format-Table -AutoSize
+    } else {
+        Write-Host "No NRPT policies defined."
+    }
+} catch {
+    Write-Host "ERROR querying NRPT: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 3.6 WinHTTP proxy
+Write-Host ""
+Write-Host "WinHTTP proxy (netsh winhttp show proxy):"
+
+try {
+    & netsh winhttp show proxy
+} catch {
+    Write-Host "ERROR querying WinHTTP proxy: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 3.7 Machine-level Internet Settings proxy
+Write-Host ""
+Write-Host "Machine-level Internet Settings proxy (HKLM):"
+
+try {
+    $inetProps = Get-ItemProperty -Path $inetSettingsHKLM -ErrorAction SilentlyContinue
+    if ($inetProps) {
+        [PSCustomObject]@{
+            ProxyEnable   = $inetProps.ProxyEnable
+            ProxyServer   = $inetProps.ProxyServer
+            ProxyOverride = $inetProps.ProxyOverride
+        }
+    } else {
+        Write-Host "Internet Settings key (HKLM) not present."
+    }
+} catch {
+    Write-Host "ERROR querying HKLM Internet Settings proxy: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 3.8 DNS firewall rules (port 53)
+Write-Host ""
+Write-Host "DNS Firewall Rules (port 53):"
+
+try {
+    $dnsRules = Get-NetFirewallRule -ErrorAction SilentlyContinue |
+        Where-Object {
+            ($_.DisplayName -like '*DNS*' -or $_.DisplayGroup -like '*DNS*')
+        } |
+        Get-NetFirewallPortFilter |
+        Where-Object { $_.LocalPort -eq 53 -or $_.RemotePort -eq 53 } |
+        ForEach-Object {
+            $rule = Get-NetFirewallRule -Name $_.InstanceID
+            $addr = $rule | Get-NetFirewallAddressFilter
+            [PSCustomObject]@{
+                DisplayName   = $rule.DisplayName
+                Direction     = $rule.Direction
+                Action        = $rule.Action
+                Enabled       = $rule.Enabled
+                Profile       = $rule.Profile
+                RemoteAddress = $addr.RemoteAddress
+            }
+        }
+
+    if ($dnsRules) {
+        $dnsRules | Format-Table -AutoSize
+    } else {
+        Write-Host "No DNS-related firewall rules found."
+    }
+} catch {
+    Write-Host "ERROR querying DNS firewall rules: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# 3.9 Scheduled Task alignment (read-only)
+Write-Host ""
+Write-Host "Scheduled Task alignment (Cloudflare DoH Enforcement):"
+
+$expectedTaskName = "Cloudflare DoH Enforcement"
+$expectedTaskCmd  = 'powershell.exe -ExecutionPolicy Bypass -File D:\TLS_Secure\DoH\Cloudflare_DoH_Hardening_Orchestration.ps1'
+
+try {
+    $taskOutput = schtasks /query /tn "$expectedTaskName" /v /fo LIST 2>$null
+    if ($LASTEXITCODE -eq 0 -and $taskOutput) {
+        $taskOutput
+    } else {
+        Write-Host "Scheduled task '$expectedTaskName' not found."
+    }
+} catch {
+    Write-Host "ERROR querying scheduled task '$expectedTaskName': $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# End of correcting tool — no success messages, no assumptions
+

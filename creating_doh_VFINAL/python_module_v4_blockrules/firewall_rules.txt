@@ -1,0 +1,71 @@
+# name|dir|ips|profile=any|expires=YYYY-MM-DD|label:en=...|label:es=...
+# (expires & labels are optional)
+
+#If the action is to block IP then
+#action=block | name=CenturionCent_Block_roosterreturns | direction=out | targets=here_write_ipv4_and_ipv6 | profile=any
+#If the action is to allow these IP
+#action=allow | name=CenturionCent_Block_roosterreturns | direction=out | targets=here_write_ipv4_and_ipv6 | profile=any
+
+action=block | name=CenturionCent_Block_GoogleAnalytics | direction=out | targets=216.58.0.0/16 | profile=any | label:en=Google Analytics CIDR
+action=block | name=CenturionCent_Block_GoogleFonts | direction=out | targets=142.250.0.0/15 | profile=any | label:en=Google Fonts
+action=block | name=CenturionCent_Block_Caliente | direction=out | targets=104.18.10.229,104.18.11.229 | profile=any | label:en=Caliente MX
+action=block | name=CenturionCent_Block_luckypromo | direction=out | targets=194.5.78.11,91.195.240.112 | profile=any
+action=block | name=CenturionCent_Block_wwwsafendsecure | direction=out | targets=91.195.240.12,103.224.182.9 | profile=any
+action=block | name=CenturionCent_Block_abovedomains | direction=out | targets=103.224.182.9,103.224.212.9,103.224.182.240 | profile=any
+
+action=block | name=CenturionCent_Block_roosterreturns | direction=out | targets=2606:4700:3030::6815:3001,2606:4700:3030::6815:4001,2606:4700:3030::6815:5001,104.21.32.1,104.21.48.1,104.21.64.1,104.21.80.1,104.21.96.1,104.21.112.1,104.21.16.1 | profile=any
+
+action=block | name=CenturionCent_Block_micklyslot | direction=out | targets=194.5.78.12 | profile=any
+action=block | name=CenturionCent_Block_health-crohns-q7myn8 | direction=out | targets=2806:250:42e:be20:7e52:941a:92af:bd34,104.17.157.1,104.17.158.1 | profile=any
+action=block | name=CenturionCent_Block_betano | direction=out | targets=172.64.144.152,104.18.43.104,2606:4700:4400::ac40:9098,2606:4700:4400::6812:2b68 | profile=any
+
+action=block | name=CenturionCent_Block_tsyndicate | direction=out | targets=213.174.157.105,213.174.157.83,213.174.157.82,136.243.51.205,195.46.39.1,136.243.46.15,138.201.49.51,162.55.130.248,94.130.167.170,136.243.149.187 | profile=any
+
+action=block | name=CenturionCent_Block_chaturbate | direction=out | targets=142.251.40.174,142.251.32.110,172.217.165.142,142.251.46.174,142.250.65.17,172.217.30.46,172.217.5.14,172.217.0.174,192.178.56.238,142.251.41.78,172.217.168.174,216.239.36.178,216.239.34.178,216.239.38.178,142.250.179.174,216.58.214.174,142.251.36.142,142.250.187.206,142.251.40.238,2607:f8b0:4012:828::200e,2607:f8b0:4009:803::200e,2607:f8b0:4009:819::200e,2800:3f0:4001:83b::200e,2607:f8b0:4005:802::200e,2607:f8b0:4006:808::200e,2607:f8b0:4006:80b::200e,2607:f8b0:4006:81e::200e,2607:f8b0:4006:821::200e | profile=any
+
+action=block | name=CenturionCent_Block_chaturbate2 | direction=in | targets=142.251.40.174,142.251.32.110,172.217.165.142,142.251.46.174,142.250.65.17,172.217.30.46,172.217.5.14,172.217.0.174,192.178.56.238,142.251.41.78,172.217.168.174,216.239.36.178,216.239.34.178,216.239.38.178,142.250.179.174,216.58.214.174,142.251.36.142,142.250.187.206,142.251.40.238,2607:f8b0:4012:828::200e,2607:f8b0:4009:803::200e,2607:f8b0:4009:819::200e,2800:3f0:4001:83b::200e,2607:f8b0:4005:802::200e,2607:f8b0:4006:808::200e,2607:f8b0:4006:80b::200e,2607:f8b0:4006:81e::200e,2607:f8b0:4006:821::200e | profile=any
+
+action=block | name=CenturionCent_Block_bcgame | direction=in | targets=104.21.95.92,172.67.144.19,172.64.80.1,188.114.96.0,188.114.97.0,188.114.97.6,188.114.96.6,188.114.96.5,188.114.97.3,188.114.97.5,188.114.96.3,2606:4700:3033::ac43:9013,2606:4700:3037::6815:5f5c,2a06:98c1:3121::,2a06:98c1:3120::,2a06:98c1:3120::2,2a06:98c1:3121::2,2a06:98c1:3120::3,2a06:98c1:3121::3,2a06:98c1:3121::7,2a06:98c1:3120::7 | profile=any
+action=block | name=CenturionCent_Block_bcgame | direction=out | targets=104.21.95.92,172.67.144.19,172.64.80.1,188.114.96.0,188.114.97.0,188.114.97.6,188.114.96.6,188.114.96.5,188.114.97.3,188.114.97.5,188.114.96.3,2606:4700:3033::ac43:9013,2606:4700:3037::6815:5f5c,2a06:98c1:3121::,2a06:98c1:3120::,2a06:98c1:3120::2,2a06:98c1:3121::2,2a06:98c1:3120::3,2a06:98c1:3121::3,2a06:98c1:3121::7,2a06:98c1:3120::7 | profile=any
+
+action=block | name=CenturionCent_Block_bitmart | direction=out | targets=104.18.17.176,104.18.16.176,2606:4700::6812:11b0,2606:4700::6812:10b0 | profile=any
+action=block | name=CenturionCent_Block_bitmart | direction=in | targets=104.18.17.176,104.18.16.176,2606:4700::6812:11b0,2606:4700::6812:10b0 | profile=any
+
+action=block | name=CenturionCent_Block_otieu | direction=in | targets=172.64.146.197,104.18.41.59,2606:4700:4400::ac40:92c5,2606:4700:4400::6812:293b | profile=any
+action=block | name=CenturionCent_Block_otieu | direction=out | targets=172.64.146.197,104.18.41.59,2606:4700:4400::ac40:92c5,2606:4700:4400::6812:293b | profile=any
+
+action=block | name=CenturionCent_Block_aliexpress | direction=in | targets=23.9.171.48,96.16.198.7,184.84.33.102,104.100.65.32,23.11.11.54,23.37.187.80,23.207.107.56,104.85.19.24,2.16.105.97,23.223.98.10,104.82.235.52,23.210.122.250,23.3.184.35,23.202.181.37,23.216.178.148,23.204.11.32,184.24.249.143,104.74.43.47,47.246.174.14,47.246.173.30,47.246.173.237,47.246.174.180,23.196.173.15,184.29.234.177,23.204.11.32,23.208.177.40,23.35.134.23 | profile=any
+action=block | name=CenturionCent_Block_aliexpress | direction=out | targets=23.9.171.48,96.16.198.7,184.84.33.102,104.100.65.32,23.11.11.54,23.37.187.80,23.207.107.56,104.85.19.24,2.16.105.97,23.223.98.10,104.82.235.52,23.210.122.250,23.3.184.35,23.202.181.37,23.216.178.148,23.204.11.32,184.24.249.143,104.74.43.47,47.246.174.14,47.246.173.30,47.246.173.237,47.246.174.180,23.196.173.15,184.29.234.177,23.204.11.32,23.208.177.40,23.35.134.23 | profile=any
+
+action=block | name=CenturionCent_Block_canekilttantrum | direction=in | targets=172.240.41.54,172.240.41.86,172.240.41.118,172.240.41.22,94.242.247.22,69.41.167.173,69.41.167.93,69.41.167.153,69.41.167.133,69.41.167.113,64.120.116.134,64.120.116.133 | profile=any
+action=block | name=CenturionCent_Block_canekilttantrum | direction=out | targets=172.240.41.54,172.240.41.86,172.240.41.118,172.240.41.22,94.242.247.22,69.41.167.173,69.41.167.93,69.41.167.153,69.41.167.133,69.41.167.113,64.120.116.134,64.120.116.133 | profile=any
+
+action=block | name=CenturionCent_Block_livejasmin | direction=in | targets=109.71.161.200,185.13.88.201,74.125.139.84,93.93.51.191,93.93.51.223 | profile=any
+action=block | name=CenturionCent_Block_livejasmin | direction=out | targets=109.71.161.200,185.13.88.201,74.125.139.84,93.93.51.191,93.93.51.223 | profile=any
+
+action=block | name=CenturionCent_Block_adsweb_betforce | direction=in | targets=49.13.44.107,95.217.170.64 | profile=any
+action=block | name=CenturionCent_Block_adsweb_betforce | direction=in | targets=49.13.44.107,95.217.170.64,104.18.42.200,172.64.145.56 | profile=any
+action=block | name=CenturionCent_Block_adsweb_betforce | direction=out | targets=49.13.44.107,95.217.170.64,104.18.42.200,172.64.145.56 | profile=any
+action=block | name=CenturionCent_Block_adsweb_betforce | direction=out | targets=104.18.42.200,172.64.145.56 | profile=any
+
+action=block | name=CenturionCent_Block_tsyndicate.com | direction=in | targets=213.174.157.105,213.174.157.83,213.174.157.82,195.46.39.1,136.243.69.157,88.99.140.214,94.130.143.224,94.130.164.161,136.243.83.47,88.99.167.185,95.216.74.50,136.243.46.131,94.130.167.170,176.9.61.214,213.174.157.82,144.76.168.81,188.40.100.250,144.76.168.81,213.174.157.83,213.239.193.198,94.130.167.170,88.99.167.185,136.243.59.248 | profile=any
+action=block | name=CenturionCent_Block_tsyndicate.com | direction=out | targets=213.174.157.105,213.174.157.83,213.174.157.82,195.46.39.1,136.243.69.157,88.99.140.214,94.130.143.224,94.130.164.161,136.243.83.47,88.99.167.185,95.216.74.50,136.243.46.131,94.130.167.170,176.9.61.214,213.174.157.82,144.76.168.81,188.40.100.250,144.76.168.81,213.174.157.83,213.239.193.198,94.130.167.170,88.99.167.185,136.243.59.248 | profile=any
+
+action=block | name=CenturionCent_Block_www.sniffies.com | direction=in | targets=104.18.22.221,104.18.23.221,104.26.2.249,104.26.3.249,142.250.189.131,172.64.146.234,173.194.210.154,185.59.223.192,192.178.50.40,192.178.50.68,213.174.157.105,216.239.32.181,64.210.136.0,66.254.114.154,89.222.120.8 | profile=any
+action=block | name=CenturionCent_Block_www.sniffies.com | direction=out | targets=104.18.22.221,104.18.23.221,104.26.2.249,104.26.3.249,142.250.189.131,172.64.146.
+
+action=block | name=CenturionCent_Block_hub.zoom.us | direction=in | targets=170.114.52.123,170.114.45.1 | profile=any
+action=block | name=CenturionCent_Block_hub.zoom.us | direction=out | targets=170.114.52.123,170.114.45.1 | profile=any
+
+action=block | name=CenturionCentinel_Block_kirkunique.sellfy.store | direction=out | targets=3.214.66.127, 3.214.66.127 | profile=any
+action=block | name=CenturionCent_Block_kirkunique.sellfy.store | direction=out | targets=.214.66.127, 3.214.66.127	 | profile=any
+
+action=block | name=CenturionCent_Block_cdn.cookielaw.org | direction=out | targets=104.18.86.42, 104.18.87.42, 2606:4700::6812:562a2606:4700::6812:572a, 2606:4700::6812:572a2606:4700::6812:562a | profile=any
+action=block | name=CenturionCent_Block_cdn.cookielaw.org | direction=in | targets=104.18.86.42, 104.18.87.42, 2606:4700::6812:562a2606:4700::6812:572a, 2606:4700::6812:572a2606:4700::6812:562a | profile=any
+
+action=block | name=CenturionCent_Block_us05ark.zoom.us | direction=out | targets=134.224.4.241, 134.224.4.242, 134.224.4.246, 134.224.4.247, 134.224.4.248, 134.224.4.249, 134.224.4.250, 134.224.4.251, 134.224.4.254, 134.224.4.255, 170.114.14.45, 170.114.14.48, 170.114.14.49, 170.114.14.50, 170.114.14.52, 170.114.14.53, 170.114.14.54, 170.114.14.55, 2600:1f16:1782:b200:6cda:615e:79f8:99ce, 2600:1f16:1782:b200:7c9a:4333:ed3b:7c0c, 2600:1f16:1782:b200:d56f:c8f1:3122:4dab, 2600:1f16:1782:b200:e1a2:f75a:19af:6413, 2600:1f16:1782:b202:2f1c:c58f:459e:3a2, 2600:1f16:1782:b202:47ec:cf4:e183:6a97, 2600:1f16:1782:b202:b536:dc5b:6b16:c8ba, 2600:1f16:1782:b202:f8b0:fa96:d8fd:e43c, 2600:1f18:4be5:4609:921c:e039:a88a:8f70, 2600:1f18:4be5:4609:9392:43fc:876e:5f6a, 2600:1f18:4be5:4609:9c64:db94:228a:3fc2, 2600:1f18:4be5:4609:a322:f025:78ab:c771, 2600:1f18:4be5:4609:c72f:6347:c1ff:b28e, 2600:1f18:4be5:4609:d784:84e3:2f5:7748, 2600:1f18:4be5:4609:fa50:144:7ea1:c7df, 2600:1f18:4be5:460b:2403:f1dc:14f4:8b19, 2600:1f18:4be5:460b:3c00:e557:f41c:d8a9, 2600:1f18:4be5:460b:c189:edd6:7608:efcd, 2600:1f18:4be5:460b:c1ed:404e:45b7:3df8, 2600:1f18:4be5:460b:f050:ecc8:9ed0:bae7 | profile=any
+
+action=block | name=CenturionCent_Block_us05ark.zoom.us | direction=in | targets=134.224.4.241, 134.224.4.242, 134.224.4.246, 134.224.4.247, 134.224.4.248, 134.224.4.249, 134.224.4.250, 134.224.4.251, 134.224.4.254, 134.224.4.255, 170.114.14.45, 170.114.14.48, 170.114.14.49, 170.114.14.50, 170.114.14.52, 170.114.14.53, 170.114.14.54, 170.114.14.55, 2600:1f16:1782:b200:6cda:615e:79f8:99ce, 2600:1f16:1782:b200:7c9a:4333:ed3b:7c0c, 2600:1f16:1782:b200:d56f:c8f1:3122:4dab, 2600:1f16:1782:b200:e1a2:f75a:19af:6413, 2600:1f16:1782:b202:2f1c:c58f:459e:3a2, 2600:1f16:1782:b202:47ec:cf4:e183:6a97, 2600:1f16:1782:b202:b536:dc5b:6b16:c8ba, 2600:1f16:1782:b202:f8b0:fa96:d8fd:e43c, 2600:1f18:4be5:4609:921c:e039:a88a:8f70, 2600:1f18:4be5:4609:9392:43fc:876e:5f6a, 2600:1f18:4be5:4609:9c64:db94:228a:3fc2, 2600:1f18:4be5:4609:a322:f025:78ab:c771, 2600:1f18:4be5:4609:c72f:6347:c1ff:b28e, 2600:1f18:4be5:4609:d784:84e3:2f5:7748, 2600:1f18:4be5:4609:fa50:144:7ea1:c7df, 2600:1f18:4be5:460b:2403:f1dc:14f4:8b19, 2600:1f18:4be5:460b:3c00:e557:f41c:d8a9, 2600:1f18:4be5:460b:c189:edd6:7608:efcd, 2600:1f18:4be5:460b:c1ed:404e:45b7:3df8, 2600:1f18:4be5:460b:f050:ecc8:9ed0:bae7 | profile=any
+
+action=block | name=CenturionCent_Block_prerolls.json | direction=out | targets=162.159.140.229 | profile=any
+action=block | name=CenturionCent_Block_prerolls.json | direction=in | targets=162.159.140.229 | profile=any

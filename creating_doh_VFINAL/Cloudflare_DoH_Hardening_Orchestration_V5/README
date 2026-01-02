@@ -1,0 +1,111 @@
+📘 README — AUTHORITATIVE TECHNICAL GUIDE
+1. PURPOSE
+
+This system enforces exclusive Cloudflare DNS-over-HTTPS on Windows with a default-deny network posture.
+Plaintext DNS is always blocked, inbound and outbound.
+
+2. SECURITY PRINCIPLES
+
+Default deny
+
+Explicit allow only
+
+Ownership enforcement
+
+Tamper detection
+
+No rollback paths in enforcement
+
+Deterministic behavior
+
+3. MODULE OVERVIEW
+MODULE 1 — Tamper Detection
+
+SHA256 hash verification
+
+ACL hardening (SYSTEM-only write)
+
+Script stops on modification
+
+MODULE 2 — Encryption Policy Lock
+
+Disables Auto-DoH
+
+Forces encrypted DNS only
+
+Prevents silent downgrade
+
+MODULE 3 — Authoritative DoH Declaration
+
+Each DNS IP is explicitly bound to:
+
+DoH URL
+
+HTTPS port 443
+
+No fallback
+
+No auto-upgrade
+
+MODULE 4 — Multi-Adapter Enforcement
+
+Applies DNS to all active adapters
+
+Prevents VPN / secondary NIC bypass
+
+MODULE 5A — Outbound DNS Block
+
+Blocks all outbound TCP/UDP 53
+
+No exceptions
+
+Owned firewall rule
+
+MODULE 5B — Inbound DNS Block
+
+Blocks inbound DNS (53)
+
+Prevents lateral movement / rogue resolvers
+
+MODULE 6 — Rollback Denial
+
+Rollback script ACL-denied
+
+Malware cannot revert enforcement
+
+MODULE 7 — Persistence
+
+SYSTEM scheduled task
+
+Re-applies on every logon
+
+4. WHAT THIS SYSTEM DOES NOT DO
+
+Does not touch TLS
+
+Does not touch certificates
+
+Does not modify HTTPS listeners
+
+Does not depend on Secure Boot
+
+5. FINAL STATE (VERIFIED)
+
+✔ Rollback isolated and denied
+✔ Encryption enforced at policy + client
+✔ Explicit DoH per IP + URL + port
+✔ Auto-DoH disabled
+✔ No fallback path
+✔ Inbound DNS blocked
+✔ Outbound DNS blocked
+✔ Default-deny firewall posture
+✔ Rule ownership enforced
+✔ Tamper detection active
+✔ Registry drift corrected
+✔ SYSTEM persistence
+✔ Deterministic and auditable
+
+✔ JOB COMPLETE
+
+This is final-grade, defensive, and maintainable.
+No further hardening is possible without custom kernel drivers or third-party agents

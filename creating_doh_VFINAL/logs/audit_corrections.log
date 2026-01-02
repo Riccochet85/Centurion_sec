@@ -1,0 +1,52 @@
+[2025-12-29 01:36:06] === START DNS FORENSIC AUDIT (READ-ONLY) ===
+[2025-12-29 01:36:07] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 01:36:07] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 01:36:07] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] DhcpNameServer = 192.168.0.1
+[2025-12-29 01:36:07] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 01:36:07] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] DhcpNameServer = 192.168.0.1
+[2025-12-29 01:36:07] GLOBAL DhcpNameServer = 192.168.0.1
+[2025-12-29 01:36:07] DoH: 1.1.1.1 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:36:07] DoH: 1.0.0.1 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:36:07] DoH: 2606:4700:4700::1001 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:36:07] DoH: 2606:4700:4700::1111 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:36:07] === END DNS FORENSIC AUDIT ===
+[2025-12-29 01:53:23] === START DNS FORENSIC AUDIT (READ-ONLY) ===
+[2025-12-29 01:53:23] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 01:53:23] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 01:53:23] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] DhcpNameServer = 192.168.0.1
+[2025-12-29 01:53:23] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 01:53:23] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] DhcpNameServer = 192.168.0.1
+[2025-12-29 01:53:23] GLOBAL DhcpNameServer = 192.168.0.1
+[2025-12-29 01:53:23] DoH: 1.1.1.1 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:53:23] DoH: 1.0.0.1 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:53:23] DoH: 2606:4700:4700::1001 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:53:23] DoH: 2606:4700:4700::1111 Template=https://cloudflare-dns.com/dns-query
+[2025-12-29 01:53:23] === END DNS FORENSIC AUDIT ===
+[2025-12-29 02:04:00] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 02:04:00] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 02:04:00] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] DhcpNameServer = 192.168.0.1
+[2025-12-29 02:04:00] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 02:04:00] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] DhcpNameServer = 192.168.0.1
+[2025-12-29 02:08:19] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 02:08:19] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-29 02:08:19] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-31 02:03:40] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-31 02:03:40] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-31 02:03:40] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] DhcpNameServer = 192.168.0.1
+[2025-12-31 02:03:40] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-31 02:04:34] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-31 02:04:34] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2025-12-31 02:04:34] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] DhcpNameServer = 192.168.0.1
+[2025-12-31 02:04:35] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2026-01-01 05:04:42] === START DNS FORENSIC AUDIT (READ-ONLY) ===
+[2026-01-01 05:04:43] Interface [{3c558eea-b409-424d-8660-a1379a539722}] NameServer = 1.1.1.1, 1.0.0.1
+[2026-01-01 05:04:43] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] NameServer = 1.1.1.1, 1.0.0.1
+[2026-01-01 05:04:43] Interface [{a1fad0ab-d5b4-40d0-94eb-b5f4e816efc7}] DhcpNameServer = 192.168.0.1
+[2026-01-01 05:04:43] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] NameServer = 1.1.1.1, 1.0.0.1
+[2026-01-01 05:04:43] Interface [{cf0ddb84-9ba0-4d86-b2f2-94e047a54386}] DhcpNameServer = 192.168.0.1
+[2026-01-01 05:04:43] GLOBAL DhcpNameServer = 192.168.0.1
+[2026-01-01 05:04:43] DoH: 1.1.1.1 Template=https://cloudflare-dns.com/dns-query
+[2026-01-01 05:04:43] DoH: 1.0.0.1 Template=https://cloudflare-dns.com/dns-query
+[2026-01-01 05:04:43] DoH: 2606:4700:4700::1001 Template=https://cloudflare-dns.com/dns-query
+[2026-01-01 05:04:43] DoH: 2606:4700:4700::1111 Template=https://cloudflare-dns.com/dns-query
+[2026-01-01 05:04:43] === END DNS FORENSIC AUDIT ===
